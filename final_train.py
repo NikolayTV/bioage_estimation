@@ -56,50 +56,76 @@ df = df[df['age']>18]
 
 
 # SELECT FINAL FEATURES
-features = [
-    'gender', 
-    'Systolic blood pressure average', 
+# features = [
+#     'gender', 
+#     'Systolic blood pressure average', 
 
-    # 'alpha-tocopherol (µg/dL)', # 2620 рублей
-    # 'Serum creatinine (mg/dL)', # 1,610.00
-    # 'Serum homocysteine: SI (umol/L)', # 2270 рублей 
-    # 'Serum ferritin (ng/mL)', # 630
+#     # 'alpha-tocopherol (µg/dL)', # 2620 рублей
+#     # 'Serum creatinine (mg/dL)', # 1,610.00
+#     # 'Serum homocysteine: SI (umol/L)', # 2270 рублей 
+#     # 'Serum ferritin (ng/mL)', # 630
 
-    # ~ 3000 рублей
-    # 'Serum C-reactive protein (mg/dL)', # 690
-    # 'Estimated Glomerular Filtration Rate (mL/min/1.73 m2)', # 350 рублей
-    # 'Serum blood urea nitrogen (mg/dL)', # 385 
-    # 'Serum albumin:  SI (g/L)', # 440
-    # 'Forced expiratory vol(FEV),.5 sec,max-ml', 
-]
-# Индекс массы тела 
-# Отношение талии к росту 
-# Объем легких к росту 
+#     # ~ 3000 рублей
+#     # 'Serum C-reactive protein (mg/dL)', # 690
+#     # 'Estimated Glomerular Filtration Rate (mL/min/1.73 m2)', # 350 рублей
+#     # 'Serum blood urea nitrogen (mg/dL)', # 385 
+#     # 'Serum albumin:  SI (g/L)', # 440
+#     # 'Forced expiratory vol(FEV),.5 sec,max-ml', 
+# ]
+
+# df['Body Mass Index (kg/m**2)'] = (df['Weight (kg)'] / ((df['Standing Height (cm)']*0.01)**2)).round(2)
+# df['Waist to Height ratio'] = df['Waist Circumference (cm)'] / df['Standing Height (cm)']
+# df['gender'] = df['gender'].replace({'Male':1, 'Female':0})
+
+# df['Systolic blood pressure average^2'] = df['Systolic blood pressure average'] ** 2
+# df['Body Mass Index (kg/m**2)^2'] = df['Body Mass Index (kg/m**2)'] ** 2
+# df['Waist to Height ratio^2'] = df['Waist to Height ratio'] ** 2
+
+# df['Systolic blood pressure average_log'] = df['Systolic blood pressure average'].apply(np.log)
+# df['Body Mass Index (kg/m**2)_log'] = df['Body Mass Index (kg/m**2)'].apply(np.log)
+# df['Waist to Height ratio_log'] = df['Waist to Height ratio'].apply(np.log)
+
+# features.extend(['Body Mass Index (kg/m**2)', 'Waist to Height ratio'])
+# features.extend(['Systolic blood pressure average^2', 'Body Mass Index (kg/m**2)^2', 'Waist to Height ratio^2'])
+# features.extend(['Systolic blood pressure average_log', 'Body Mass Index (kg/m**2)_log', 'Waist to Height ratio_log'])
+# features.extend(['Weight (kg)', 'Standing Height (cm)', 'Waist Circumference (cm)'])
+# df[features] = df[features].astype(float)
+# df['gender'] = df['gender'].astype(int)
+
+# df[features + meta_features].to_csv('train_data.csv')
+
+meta_features = ['age', 'Respondent sequence number', 'Respondent sequence number that includes an identifier for NHANES III and NHANES continuous']
+
+base_cols = ['Systolic blood pressure average', 'Hip Circumference (cm)',
+              'Weight (kg)', 'Standing Height (cm)', 'Waist Circumference (cm)',
+              'gender']
+df = df[df[base_cols].isna().sum(axis=1) < 3]
+print('1', df.shape)
 
 df['Body Mass Index (kg/m**2)'] = (df['Weight (kg)'] / ((df['Standing Height (cm)']*0.01)**2)).round(2)
 df['Waist to Height ratio'] = df['Waist Circumference (cm)'] / df['Standing Height (cm)']
-df['gender'] = df['gender'].replace({'Male':1, 'Female':0})
+df['Waist to Hip ratio'] = df['Waist Circumference (cm)'] / df['Hip Circumference (cm)']
 
-df['Systolic blood pressure average^2'] = df['Systolic blood pressure average'] ** 2
-df['Body Mass Index (kg/m**2)^2'] = df['Body Mass Index (kg/m**2)'] ** 2
-df['Waist to Height ratio^2'] = df['Waist to Height ratio'] ** 2
+features = base_cols + ['Body Mass Index (kg/m**2)', 'Waist to Height ratio', 'Waist to Hip ratio']
 
-df['Systolic blood pressure average_log'] = df['Systolic blood pressure average'].apply(np.log)
-df['Body Mass Index (kg/m**2)_log'] = df['Body Mass Index (kg/m**2)'].apply(np.log)
-df['Waist to Height ratio_log'] = df['Waist to Height ratio'].apply(np.log)
 
-features.extend(['Body Mass Index (kg/m**2)', 'Waist to Height ratio'])
-features.extend(['Systolic blood pressure average^2', 'Body Mass Index (kg/m**2)^2', 'Waist to Height ratio^2'])
-features.extend(['Systolic blood pressure average_log', 'Body Mass Index (kg/m**2)_log', 'Waist to Height ratio_log'])
-features.extend(['Weight (kg)', 'Standing Height (cm)', 'Waist Circumference (cm)'])
-df[features] = df[features].astype(float)
-df['gender'] = df['gender'].astype(int)
-meta_features = ['age', 'Respondent sequence number', 'Respondent sequence number that includes an identifier for NHANES III and NHANES continuous']
-df[features + meta_features].to_csv('train_data.csv')
+# Polinomial features
 
-train_df = df[features + meta_features].copy().dropna()
-train_df = train_df.dropna()
+# df['Systolic blood pressure average^2'] = df['Systolic blood pressure average'] ** 2
+# df['Body Mass Index (kg/m**2)^2'] = df['Body Mass Index (kg/m**2)'] ** 2
+# df['Waist to Height ratio^2'] = df['Waist to Height ratio'] ** 2
 
+# df['Systolic blood pressure average_log'] = df['Systolic blood pressure average'].apply(np.log)
+# df['Body Mass Index (kg/m**2)_log'] = df['Body Mass Index (kg/m**2)'].apply(np.log)
+# df['Waist to Height ratio_log'] = df['Waist to Height ratio'].apply(np.log)
+# features.extend(['Systolic blood pressure average^2', 'Body Mass Index (kg/m**2)^2', 'Waist to Height ratio^2'])
+# features.extend(['Systolic blood pressure average_log', 'Body Mass Index (kg/m**2)_log', 'Waist to Height ratio_log'])
+
+
+train_df = df[features + meta_features].copy()
+train_df = train_df[train_df['age'].notna()]
+print('train_df.shape', train_df.shape)
+train_df.to_csv('train_df.csv')
 
 def train_and_save_models(model, df, features, save_to='models/', n_splits=5):
     if not os.path.exists(save_to): os.mkdir(save_to)

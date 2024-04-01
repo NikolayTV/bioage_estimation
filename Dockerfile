@@ -11,4 +11,5 @@ COPY models/ models
 COPY fastapi_bioage_prediction.py fastapi_bioage_prediction.py
 COPY avgs_for_age_group.csv avgs_for_age_group.csv
 
-CMD ["uvicorn", "fastapi_bioage_prediction:app", "--host", "0.0.0.0", "--port", "80"]
+EXPOSE 8030
+CMD ["uvicorn", "fastapi_bioage_prediction:app", "--host", "0.0.0.0", "--port", "8030"]

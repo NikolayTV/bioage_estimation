@@ -9,6 +9,14 @@ from pydantic import BaseModel, validator, ValidationError
 
 app = FastAPI()
 
+# Есть такие обхваты - это средние значения
+# Arm Circumference (cm)              32.672587
+# Maximal Calf Circumference (cm)     38.235426
+# Hip Circumference (cm)             106.934280
+# Thigh Circumference (cm)            52.186038
+# Waist Circumference (cm)            97.032374
+
+
 
 class Gender(Enum):
     Male = "Male"
@@ -20,6 +28,7 @@ class InputFeatures(BaseModel):
     Weight_kg: float = Field(default=70.0, ge=20, le=200, description="Weight in kilograms within the range 20-200")
     Standing_Height_cm: float = Field(default=170.0, ge=50, le=250, description="Standing height in centimeters within the range 50-250")
     Waist_Circumference_cm: float = Field(default=80.0, ge=30, le=150, description="Waist circumference in centimeters within the range 30-150")
+    Hip_Circumference_cm: float = Field(default=40.0, ge=10, le=150, description="Hip circumference in centimeters within the range 10-150")
     Systolic_blood_pressure_average: float = Field(default=120.0, ge=70, le=250, description="Systolic blood pressure average in mmHg within the range 70-250")
     Gender: str = Field(default=Gender.Male, description="Gender of the individual")
 
@@ -59,39 +68,33 @@ def feature_engineering(df):
         'Standing_Height_cm': 'Standing Height (cm)',
         'Waist_Circumference_cm': 'Waist Circumference (cm)',
         'Systolic_blood_pressure_average': 'Systolic blood pressure average',
-        'Gender': 'gender',
+        'Hip_Circumference_cm': 'Hip Circumference (cm)',
+        'Gender': 'gender'
                          })
+
+    # df['Body Mass Index (kg/m**2)'] = (df['Weight (kg)'] / ((df['Standing Height (cm)']*0.01)**2)).round(2)
+    # df['Waist to Height ratio'] = df['Waist Circumference (cm)'] / df['Standing Height (cm)']
+    # df['gender'] = df['gender'].replace({'Male':1, 'Female':0})
+
+    # df['Systolic blood pressure average^2'] = df['Systolic blood pressure average'] ** 2
+    # df['Body Mass Index (kg/m**2)^2'] = df['Body Mass Index (kg/m**2)'] ** 2
+    # df['Waist to Height ratio^2'] = df['Waist to Height ratio'] ** 2
+
+    # df['Systolic blood pressure average_log'] = df['Systolic blood pressure average'].apply(np.log)
+    # df['Body Mass Index (kg/m**2)_log'] = df['Body Mass Index (kg/m**2)'].apply(np.log)
+    # df['Waist to Height ratio_log'] = df['Waist to Height ratio'].apply(np.log)
+
+    base_cols = ['Systolic blood pressure average', 'Hip Circumference (cm)',
+                'Weight (kg)', 'Standing Height (cm)', 'Waist Circumference (cm)',
+                'gender']
 
     df['Body Mass Index (kg/m**2)'] = (df['Weight (kg)'] / ((df['Standing Height (cm)']*0.01)**2)).round(2)
     df['Waist to Height ratio'] = df['Waist Circumference (cm)'] / df['Standing Height (cm)']
+    df['Waist to Hip ratio'] = df['Waist Circumference (cm)'] / df['Hip Circumference (cm)']
     df['gender'] = df['gender'].replace({'Male':1, 'Female':0})
-
-    df['Systolic blood pressure average^2'] = df['Systolic blood pressure average'] ** 2
-    df['Body Mass Index (kg/m**2)^2'] = df['Body Mass Index (kg/m**2)'] ** 2
-    df['Waist to Height ratio^2'] = df['Waist to Height ratio'] ** 2
-
-    df['Systolic blood pressure average_log'] = df['Systolic blood pressure average'].apply(np.log)
-    df['Body Mass Index (kg/m**2)_log'] = df['Body Mass Index (kg/m**2)'].apply(np.log)
-    df['Waist to Height ratio_log'] = df['Waist to Height ratio'].apply(np.log)
 
     return df
 
-def data_validation(df):
-        
-        ranges = {
-            'Weight_kg': (20, 200),
-            'Standing_Height_cm': (50, 250),
-            'Waist_Circumference_cm': (40, 150),
-            'Systolic_blood_pressure_average': (70, 200),
-        }
-        for key in ranges.keys():
-            value = df[key].values.tolist()[0]
-            min_val, max_val = ranges[key]
-            if not (min_val <= value <= max_val):
-                raise ValueError(f'{key} must be between {min_val} and {max_val}.')
-            elif Gender not in ['Male', 'Female']:
-                raise ValueError(f'{key} must be Male or Female')
-                
 
 def find_bioage_percentile(age: int, health_stock: float, percentile_df: pd.DataFrame) -> str:
     """
