@@ -1,10 +1,16 @@
 # ComputBioAge
-This repo contains code and front-end part for biological age calculation by Klemera &amp; Doubal, 2006 approach which with our carefully selected features which we find the most informative and accessible.
+This repo contains code and front-end part for biological age calculation
 
-Use the following command to run the fron-end part.
+
+Use the following command to run Swagger API
 
 ```
-streamlit run streamlit_app.py
+docker build -t myfastapiapp .
+docker run --name my_fastapi_app -p 80:80 myfastapiapp
 ```
 
 
+Or simply 
+```
+uvicorn fastapi_bioage_prediction:app --reload
+```
