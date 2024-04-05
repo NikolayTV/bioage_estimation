@@ -51,7 +51,7 @@ df['gender'] = df['gender'].astype(str).replace({'2': 'Female', '1': 'Male'})
 # df.to_csv('data_inner/raw_nhanes_data.csv', index=False)
 not_replicated_columns = df.columns[~df.columns.str.contains('replicate')]
 df = df[not_replicated_columns]
-df = df[df['age']>18]
+df = df[(df['age']>18) & (df['age']<70)]
 
 
 
@@ -96,7 +96,8 @@ df = df[df['age']>18]
 
 meta_features = ['age', 'Respondent sequence number', 'Respondent sequence number that includes an identifier for NHANES III and NHANES continuous']
 
-base_cols = ['Systolic blood pressure average', 'Hip Circumference (cm)',
+base_cols = ['Systolic blood pressure average', 
+              'Hip Circumference (cm)', 
               'Weight (kg)', 'Standing Height (cm)', 'Waist Circumference (cm)',
               'gender']
 df = df[df[base_cols].isna().sum(axis=1) < 3]
@@ -106,7 +107,7 @@ df['Body Mass Index (kg/m**2)'] = (df['Weight (kg)'] / ((df['Standing Height (cm
 df['Waist to Height ratio'] = df['Waist Circumference (cm)'] / df['Standing Height (cm)']
 df['Waist to Hip ratio'] = df['Waist Circumference (cm)'] / df['Hip Circumference (cm)']
 
-features = base_cols + ['Body Mass Index (kg/m**2)', 'Waist to Height ratio', 'Waist to Hip ratio']
+features = base_cols + ['Body Mass Index (kg/m**2)', 'Waist to Height ratio']#, 'Waist to Hip ratio']
 
 
 # Polinomial features
@@ -122,9 +123,42 @@ features = base_cols + ['Body Mass Index (kg/m**2)', 'Waist to Height ratio', 'W
 # features.extend(['Systolic blood pressure average_log', 'Body Mass Index (kg/m**2)_log', 'Waist to Height ratio_log'])
 
 
+# Filter overweight people
+def filter_extreme_weights(df, lower_age, upper_age, lower_weight_quantile, upper_weight_quantile):
+    """
+    Filters out individuals with extreme weights based on the specified quantiles for each age group.
+
+    :param df: DataFrame containing age and weight columns.
+    :param lower_age: The age to start applying the filter.
+    :param upper_age: The age to end applying the filter.
+    :param lower_weight_quantile: The lower quantile threshold of weight.
+    :param upper_weight_quantile: The upper quantile threshold of weight.
+    :return: A filtered DataFrame.
+    """
+    # Apply filters for each age to smooth out the transitions
+    for age in range(lower_age, upper_age + 1):
+        age_df = df[df['age'] == age]
+        lower_threshold = age_df['Weight (kg)'].quantile(lower_weight_quantile)
+        upper_threshold = age_df['Weight (kg)'].quantile(upper_weight_quantile)
+        
+        # Filter the dataframe for the current age
+        df = df[~((df['age'] == age) & ((df['Weight (kg)'] < lower_threshold) | (df['Weight (kg)'] > upper_threshold)))]
+    
+    return df
+
+
 train_df = df[features + meta_features].copy()
 train_df = train_df[train_df['age'].notna()]
 print('train_df.shape', train_df.shape)
+
+selected_ages            = [20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85]
+selected_upper_quantiles = [82, 83, 84, 85, 86, 87, 90, 92, 94, 96, 100, 100, 100, 100]
+filtered_train_df = train_df
+for age, upper_quantile in zip(selected_ages, selected_upper_quantiles):
+    filtered_train_df = filter_extreme_weights(filtered_train_df, age-5, age, 0.0, upper_quantile/100)
+train_df = filtered_train_df.copy()
+print('Filtered overweights', train_df.shape[0])
+
 train_df.to_csv('train_df.csv')
 
 def train_and_save_models(model, df, features, save_to='models/', n_splits=5):
@@ -155,8 +189,8 @@ def train_and_save_models(model, df, features, save_to='models/', n_splits=5):
 
 
 train_df, models_saved = train_and_save_models(
-    CatBoostRegressor(silent=True, random_state=42, max_depth=5, iterations=300, cat_features=['gender']), 
-    train_df, features, save_to='models/catboost')
+    CatBoostRegressor(silent=True, random_state=42, max_depth=5, iterations=600, l2_leaf_reg=5, cat_features=['gender']), 
+    train_df, features, save_to='models/cat_waist_weight_height_hip_ad_filtred')
     # LinearRegression(), 
     # train_df, features, save_to='models/linreg')
 mae = mean_absolute_error(train_df['age'], train_df['y_pred'])

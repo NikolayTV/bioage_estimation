@@ -23,6 +23,13 @@ class Gender(Enum):
     Female = "Female"
 
 
+class AvailableModels(Enum):
+    cat_waist_weight_height = "cat_waist_weight_height"
+    cat_waist_weight_height_hip = "cat_waist_weight_height_hip"
+    cat_waist_weight_height_hip_ad = "cat_waist_weight_height_hip_ad"
+    cat_waist_weight_height_hip_ad_filtred = "cat_waist_weight_height_hip_ad_filtred"
+
+
 class InputFeatures(BaseModel):
     Age: float = Field(default=40, ge=10, le=120, description="Age in ranges 10 - 100")
     Weight_kg: float = Field(default=70.0, ge=20, le=200, description="Weight in kilograms within the range 20-200")
@@ -31,7 +38,7 @@ class InputFeatures(BaseModel):
     Hip_Circumference_cm: float = Field(default=40.0, ge=10, le=150, description="Hip circumference in centimeters within the range 10-150")
     Systolic_blood_pressure_average: float = Field(default=120.0, ge=70, le=250, description="Systolic blood pressure average in mmHg within the range 70-250")
     Gender: str = Field(default=Gender.Male, description="Gender of the individual")
-
+    Selected_mdoel:  str = Field(default=AvailableModels.cat_waist_weight_height_hip_ad_filtred, description="One of ['cat_waist_weight_height', 'cat_waist_weight_height_hip', 'cat_waist_weight_height_hip_ad', 'cat_waist_weight_height_hip_ad_filtred']")
 
 # Define the output model
 class PredictionResult(BaseModel):
@@ -42,24 +49,28 @@ class PredictionResult(BaseModel):
 
 
 # Load models
-model_to_use = 'catboost'
-model_paths = [
-    f'models/{model_to_use}/model_fold_1.joblib',
-    f'models/{model_to_use}/model_fold_2.joblib',
-    f'models/{model_to_use}/model_fold_3.joblib',
-    f'models/{model_to_use}/model_fold_4.joblib',
-    f'models/{model_to_use}/model_fold_5.joblib'
-] 
+# model_to_use = 'catboost'
+models = {}
+for model_to_use in ['cat_waist_weight_height', 'cat_waist_weight_height_hip', 'cat_waist_weight_height_hip_ad', 'cat_waist_weight_height_hip_ad_filtred']:
+    model_paths = [
+        f'models/{model_to_use}/model_fold_1.joblib',
+        f'models/{model_to_use}/model_fold_2.joblib',
+        f'models/{model_to_use}/model_fold_3.joblib',
+        f'models/{model_to_use}/model_fold_4.joblib',
+        f'models/{model_to_use}/model_fold_5.joblib'
+    ] 
+    models_loaded = [load(model_path) for model_path in model_paths]
+    models[model_to_use] = models_loaded
 
-models = [load(model_path) for model_path in model_paths]
 health_stock_percentile_dff = pd.read_csv('models/health_stock_percentile_dff.csv', index_col=0)
 
-def get_preds(models, data_row):
+def get_preds(selected_model, data_row):
+    
     predictions = 0
-    for model in models:
+    for model in models[selected_model]:
         pred = model.predict(data_row[model.feature_names_])
         predictions += pred[0]
-    prediction = predictions / len(models)
+    prediction = predictions / len(models[selected_model])
     return round(prediction, 2)
 
 def feature_engineering(df):
@@ -113,12 +124,15 @@ def find_bioage_percentile(age: int, health_stock: float, percentile_df: pd.Data
 
     # Determine the age group
     age = int(age)
+    print('age', age)
     health_stock = float(health_stock)
     age_group = age // 5 * 5  # Group by every 5 years, aligning with the provided logic
+    print('age_group', age_group)
     if age_group < 20:
         age_group = 20
     elif age_group > 85:
         age_group = 85
+    print('age_group', age_group)
     
     # Filter the DataFrame for the specific age group
     age_group_dff = percentile_df[percentile_df['Age'].astype(int) == int(age_group)]
@@ -139,20 +153,24 @@ def predict(features: InputFeatures):
         for key, value in data_dict.items():
             if isinstance(value, Enum):
                 data_dict[key] = value.value
+        selected_model = data_dict['Selected_mdoel']
 
         input_df = pd.DataFrame([data_dict.values()], columns=data_dict.keys())
+        assert input_df.shape[0]==1
         final_df = feature_engineering(input_df)
 
-        prediction = get_preds(models, final_df)
+        print('input_df', input_df)
+        prediction = get_preds(selected_model, final_df)
         final_df['y_pred'] = prediction
         Age = input_df['Age'].values.tolist()[0]
+        print('Age', Age)
         health_stock = Age - prediction
         leaderbord = find_bioage_percentile(Age, health_stock, health_stock_percentile_dff)
 
         return {"prediction": prediction,
                 "leaderbord_text": leaderbord['leaderbord_text'],
                 "leaderbord_value": leaderbord['leaderbord_value'],
-                "age_group": f"От {int(leaderbord['age_group'])-5} до {int(leaderbord['age_group'])}"
+                "age_group": f"От {int(leaderbord['age_group'])} до {int(leaderbord['age_group'])+5}"
                 }
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Prediction error: {str(e)}")

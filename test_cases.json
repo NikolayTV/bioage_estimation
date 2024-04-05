@@ -1,4 +1,4 @@
-cases = [
+{
   [    
     { 
       "Tochka": "A",
@@ -255,7 +255,7 @@ cases = [
       "Weight_kg": 75.5,
       "Systolic_blood_pressure_average": 110,
       "Waist_Circumference_cm": 90,
-      "Hip_Circumference_cm": 120,
+      "Hip_Circumference_cm": 95,
       "Gender": "Female",
       "pred": 
 {
@@ -291,13 +291,124 @@ cases = [
   "age_group": "От 60 до 65"
 }
     }
+  ],
+
+
+
+
+
+  [
+  { 
+      "Tochka": "A",
+      "name": "Наталья Киселева",
+      "Age": 55,
+      "Standing_Height_cm": 165,
+
+      "Weight_kg": 68.7,
+      "Systolic_blood_pressure_average": 112,
+      "Waist_Circumference_cm": 75,
+      "Hip_Circumference_cm": 105,
+      "Gender": "Female",
+      "pred": 
+{
+  "prediction": 34.96,
+  "leaderbord_text": "Ваше значение биовозраста лучше чем у 94.0% людей вашей возрастной группы",
+  "leaderbord_value": 94,
+  "age_group": "От 50 до 55"
+}
+    },
+  { 
+      "Tochka": "B",
+      "name": "Наталья Киселева",
+      "Age": 55,
+      "Standing_Height_cm": 165,
+
+      "Weight_kg": 64.2,
+      "Systolic_blood_pressure_average": 120,
+      "Waist_Circumference_cm": 72,
+      "Hip_Circumference_cm": 102,
+      "Gender": "Female",
+      "pred": 
+{
+  "prediction": 35.33,
+  "leaderbord_text": "Ваше значение биовозраста лучше чем у 93.0% людей вашей возрастной группы",
+  "leaderbord_value": 93,
+  "age_group": "От 50 до 55"
+}
+    }
+  ],
+
+
+
+  [
+ { 
+      "Tochka": "A",
+      "name": "Давид Малев-Ланецкий",
+      "Age": 55,
+      "Standing_Height_cm": 169,
+
+      "Weight_kg": 113,
+      "Systolic_blood_pressure_average": 120,
+      "Waist_Circumference_cm": 124,
+      "Hip_Circumference_cm": 116,
+      "Gender": "Male",
+      "pred": 
+{
+  "prediction": 29.3,
+  "leaderbord_text": "Ваше значение биовозраста лучше чем у 98.0% людей вашей возрастной группы",
+  "leaderbord_value": 98,
+  "age_group": "От 50 до 55"
+}
+    },
+ { 
+      "Tochka": "B",
+      "name": "Давид Малев-Ланецкий",
+      "Age": 55,
+      "Standing_Height_cm": 169,
+
+      "Weight_kg": 105,
+      "Systolic_blood_pressure_average": 110,
+      "Waist_Circumference_cm": 111,
+      "Hip_Circumference_cm": 109,
+      "Gender": "Male",
+      "pred": 
+{
+  "prediction": 36.08,
+  "leaderbord_text": "Ваше значение биовозраста лучше чем у 92.0% людей вашей возрастной группы",
+  "leaderbord_value": 92,
+  "age_group": "От 50 до 55"
+}
+    }
   ]
 
 
 
-]
+[
+  { 
+      "Tochka": "A",
+      "name": "Эльмира",
+      "Age": 29,
+      "Standing_Height_cm": 160,
+
+      "Weight_kg": 50,
+      "Systolic_blood_pressure_average": 110,
+      "Waist_Circumference_cm": 54,
+      "Hip_Circumference_cm": 92,
+      "Gender": "Female",
+      "pred": 
+{
+  "prediction": 29.3,
+  "leaderbord_text": "Ваше значение биовозраста лучше чем у 98.0% людей вашей возрастной группы",
+  "leaderbord_value": 98,
+  "age_group": "От 50 до 55"
+}
+    }
+    
 
 
 
+ ]
 
 
+
+}
